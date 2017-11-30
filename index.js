@@ -1,36 +1,39 @@
-const MongoClient = require('mongodb').MongoClient;
-const assert = require('assert');
+const { MongoClient } = require('mongodb').MongoClient;
+const dbOper = require('./operations');
 
 const url = 'mongodb://localhost:27017/conFusion';
 
-MongoClient.connect(url, (err, db) => {
+MongoClient.connect(url).then((db) => {
+  console.log('correctly connected to db');
 
-    assert.equal(err, null);
+  dbOper.insertDocument(db, {
+    name: 'GrandaPizzolina',
+    description: 'Very big pizza',
+  }, 'dishes')
+    .then((result) => {
+      console.log('Insert Document:\n', result.ops);
 
-    console.log('correctly connected to the server');
-
-    const collection = db.collection('dishes');
-    //inserting one document into collection
-
-    collection.insertOne({"name": "pizza", "description": "very good pizza"},
-        ((err, result) => {
-          assert.equal(err, null);
-
-          console.log("After Insert:\n");
-          //number of operations performed successfully
-          console.log(result.ops);
-
-          collection.find({}).toArray((err, docs) => {
-            assert.equal(err, null);
-
-            console.log("Found the result");
-            console.log(docs);
-
-            db.dropCollection("dishes", (err, result) => {
-              assert.equal(err, null);
-              db.close();
-            });
-          });
-        }));
-
-});
+      dbOper.findDocuments(db, 'dishes');
+    })
+    .then((docs) => {
+      console.log('Found documents:\n', docs);
+      return dbOper.updateDocument(
+        db, { name: 'GrandaPizzolina' }
+        , { description: 'updated test' },
+        'dishes',
+      );
+    })
+    .then((res) => {
+      console.log('Updated Document:\n', res.result);
+      return dbOper.findDocuments(db, 'dishes');
+    })
+    .then((documents) => {
+      console.log('Found documents:\n', documents);
+      db.dropCollection('dishes');
+    })
+    .then((outcome) => {
+      console.log('dropped collection', outcome);
+      db.close();
+    });
+}, err => console.log(err))
+  .catch(err => console.log(err));
