@@ -1,4 +1,4 @@
-const { MongoClient } = require('mongodb').MongoClient;
+const { MongoClient } = require('mongodb');
 const dbOper = require('./operations');
 
 const url = 'mongodb://localhost:27017/conFusion';
@@ -13,7 +13,7 @@ MongoClient.connect(url).then((db) => {
     .then((result) => {
       console.log('Insert Document:\n', result.ops);
 
-      dbOper.findDocuments(db, 'dishes');
+      return dbOper.findDocuments(db, 'dishes');
     })
     .then((docs) => {
       console.log('Found documents:\n', docs);
@@ -29,11 +29,12 @@ MongoClient.connect(url).then((db) => {
     })
     .then((documents) => {
       console.log('Found documents:\n', documents);
-      db.dropCollection('dishes');
+      return db.dropCollection('dishes');
     })
     .then((outcome) => {
       console.log('dropped collection', outcome);
-      db.close();
-    });
+      return db.close();
+    })
+    .catch(err => console.log(err));
 }, err => console.log(err))
   .catch(err => console.log(err));
